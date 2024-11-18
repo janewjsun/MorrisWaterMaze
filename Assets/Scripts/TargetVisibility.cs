@@ -7,6 +7,8 @@ public class TargetVisibility : MonoBehaviour
     public GameObject player; // Assign your player object in the Inspector
     private Renderer targetRenderer;
     public float visibilityDistance = 1f;
+    public bool forceVisible = false;
+
 
     void Start()
     {
@@ -19,6 +21,12 @@ public class TargetVisibility : MonoBehaviour
 
     void Update()
     {
+
+            if (forceVisible)
+    {
+        targetRenderer.enabled = true; // Force visibility
+        return;
+    }
         // Calculate distance between the player and the target
         float distance = Vector3.Distance(player.transform.position, transform.position);
 
@@ -26,6 +34,7 @@ public class TargetVisibility : MonoBehaviour
         if (GetComponent<Collider>().enabled && distance <= visibilityDistance)
         {
             targetRenderer.enabled = true; // Show the target
+            forceVisible=true;
         }
         else {
             targetRenderer.enabled = false;

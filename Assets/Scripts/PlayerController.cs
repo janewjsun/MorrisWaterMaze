@@ -18,6 +18,9 @@ public class PlayerController : MonoBehaviour
     public GameObject bwBlockMsg;
     public GameObject endExperimentMsg;
 
+    private float trialStartTime;
+private bool targetMadeVisibleDueToTimeout;
+
     private float movementInput;
     private float rotationInput;
     private Rigidbody rb;
@@ -33,7 +36,7 @@ public class PlayerController : MonoBehaviour
     // Speed settings for movement and rotation
     public float movementSpeed = 5f;
     public float rotationSpeed = 100f;
-    private int turn = 0;
+    private int turn = 1;
 
     IEnumerator Start()
     {
@@ -55,6 +58,9 @@ public class PlayerController : MonoBehaviour
         titleMsg.SetActive(false);
 
         UpdateTargetVisibility();
+        curTime = Time.time;
+        trialStartTime = Time.time;
+        targetMadeVisibleDueToTimeout = false;
 
     }
 
@@ -63,6 +69,7 @@ public class PlayerController : MonoBehaviour
     {
         // Read the input for forward/backward movement
         movementInput = movementValue.Get<Vector2>().y;
+
     }
 
     // This function is called when a rotate input is detected (left/right)
@@ -70,6 +77,7 @@ public class PlayerController : MonoBehaviour
     {
         // Read the input for left/right rotation
         rotationInput = rotationValue.Get<float>();
+
     }
 
     void FixedUpdate()
@@ -83,6 +91,18 @@ public class PlayerController : MonoBehaviour
         float curDist = Vector3.Distance(previousPosition, transform.position);
         distance += curDist;
         previousPosition = transform.position;
+        
+
+        if (!targetMadeVisibleDueToTimeout && Time.time - trialStartTime > 30f) {
+            Debug.Log("making invisible");
+            Debug.Log($"blockNumber: {blockNumber}, targetList count: {targetList.Count}");
+
+        // Make the current target visible
+            targetList[blockNumber-1].GetComponent<Renderer>().enabled = true;
+            Debug.Log($"Renderer enabled: {targetList[blockNumber-1].GetComponent<Renderer>().enabled}");
+            targetList[blockNumber - 1].GetComponent<TargetVisibility>().forceVisible = true;
+            targetMadeVisibleDueToTimeout = true;
+        }
 
     }
 
@@ -114,24 +134,27 @@ public class PlayerController : MonoBehaviour
                 // Clear buffer
                 Output.excelBuffer = "";
             }
-            resetGame();
             if (turn % blockSize == 0 && blockNumber < 3) {
+                targetList[blockNumber - 1].GetComponent<TargetVisibility>().forceVisible = false;
+
                 UpdateTargetVisibility(); // Switch target every 10 turns
+
                 bwBlockMsg.SetActive(true);
                 Debug.Log("Activating text: " + bwBlockMsg.activeSelf);
 
                 yield return new WaitForSeconds(5);
                 bwBlockMsg.SetActive(false);
             }
+
+
             if (turn % blockSize == 0 && blockNumber == 3) {
-                UpdateTargetVisibility(); // Switch target every 10 turns
                 endExperimentMsg.SetActive(true);
                 Debug.Log("Activating text: " + endExperimentMsg.activeSelf);
 
                 yield return new WaitForSeconds(5);
                 endExperimentMsg.SetActive(false);
             }
-
+            resetGame();
 
         }
     }
@@ -139,6 +162,7 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateTargetVisibility()
     {
+
         // Disable all targets
         for (int i = 0; i < targetList.Count; i++)
         {
@@ -166,6 +190,10 @@ public class PlayerController : MonoBehaviour
         startPos = transform.position;
         distance = 0;
         curTime = Time.time;
+
+        trialStartTime = Time.time;
+        targetMadeVisibleDueToTimeout = false;
+        targetList[blockNumber - 1].GetComponent<TargetVisibility>().forceVisible = false;
     }
 
     private void MovePlayer()
